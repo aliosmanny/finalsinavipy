@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Görüntü İşleme & Python Dev Quiz Arşivi</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #c0392b;
+            --hover-bg: #ecf0f1;
+            --border-color: #bdc3c7;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --primary-color: #ecf0f1;
+            --accent-color: #2980b9;
+            --hover-bg: #2c2c2c;
+            --border-color: #444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .quiz-container {
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 700px;
+            padding: 40px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Scrollbar styling */
+        .quiz-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .quiz-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .quiz-container::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .toggle-btn {
+            background: transparent;
+            border: 2px solid var(--text-color);
+            color: var(--text-color);
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .toggle-btn:hover {
+            background-color: var(--text-color);
+            color: var(--container-bg);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .option-item {
+            background-color: transparent;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+        }
+
+        .option-item:hover {
+            background-color: var(--hover-bg);
+            border-color: var(--accent-color);
+        }
+
+        .option-item.selected {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .option-item.correct {
+            background-color: var(--success-color) !important;
+            border-color: var(--success-color) !important;
+            color: white !important;
+        }
+
+        .option-item.wrong {
+            background-color: var(--error-color) !important;
+            border-color: var(--error-color) !important;
+            color: white !important;
+        }
+
+        .btn-container {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            padding: 14px 35px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Result Screen */
+        .result-screen {
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .score-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-color) 0%, var(--border-color) 0);
+            margin: 0 auto 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .score-circle::before {
+            content: "";
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background-color: var(--container-bg);
+            border-radius: 50%;
+        }
+
+        .score-text {
+            position: relative;
+            z-index: 1;
+            color: var(--text-color);
+        }
+
+        .result-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .stat-box {
+            padding: 15px;
+            background-color: var(--hover-bg);
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .retry-btn {
+            background-color: var(--error-color);
+            margin-left: 10px;
+            display: inline-block;
+        }
+
+        .restart-btn {
+            background-color: var(--text-color);
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container">
+        <div class="header" style="align-items: center;">
+            <span id="question-counter" style="font-weight: 600; white-space: nowrap; margin-right: 20px;">Soru 1</span>
+            <div class="jump-to-question" style="display: flex; align-items: center; width: 100%; margin-right: 20px;">
+                <input type="number" id="question-jump-input" placeholder="Soru No" style="width: 100px; padding: 5px; border-radius: 5px; border: 1px solid var(--border-color); background-color: var(--bg-color); color: var(--text-color);">
+                <button id="question-jump-btn" style="padding: 5px 10px; margin-left: 5px; border-radius: 5px; border: none; background-color: var(--accent-color); color: white; cursor: pointer;">Git</button>
+            </div>
+            <button class="toggle-btn" onclick="toggleDarkMode()">🌙 / ☀️</button>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+
+        <div id="quiz-area">
+            <div class="question" id="question-text">Yükleniyor...</div>
+            <ul class="options-list" id="options-list">
+                </ul>
+            <div class="btn-container" style="justify-content: space-between;">
+                <button class="action-btn" id="prev-btn" onclick="previousQuestion()" style="background-color: #7f8c8d;">⬅ Önceki</button>
+                <div>
+                    <button class="action-btn" id="check-btn" onclick="checkAnswer()">Kontrol Et</button>
+                    <button class="action-btn" id="next-btn" onclick="nextQuestion()">Sonraki Soru ➔</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="result-area" class="result-screen">
+            <h2 style="margin-bottom:30px;">Test Tamamlandı!</h2>
+            
+            <div class="score-circle" id="score-circle">
+                <span class="score-text" id="final-score">0%</span>
+            </div>
+            
+            <p id="feedback-text" style="font-size:1.1rem; margin-bottom:20px;"></p>
+            
+            <div class="result-details">
+                <div class="stat-box">
+                    <span class="stat-label">Doğru Sayısı</span>
+                    <span class="stat-val" style="color: var(--success-color);" id="total-correct">0</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Yanlış Sayısı</span>
+                    <span class="stat-val" style="color: var(--error-color);" id="total-wrong">0</span>
+                </div>
+            </div>
+
+            <button class="action-btn restart-btn" onclick="restartFullQuiz()">Tümünü Tekrarla</button>
+            <button class="action-btn retry-btn" id="retry-wrong-btn" onclick="retryWrongAnswers()">Hatalıları Çöz</button>
+        </div>
+    </div>
+
+    <script>
+        // --- SORU HAVUZU (TÜM SORULAR) ---
+        // PDF'deki tüm sorular ve teknik olarak doğru cevapları buraya işlendi.
+        const fullQuestionPool = [
+            { q: "NumPy dizisinde veri tipini değiştirmek için hangi metot kullanılır?", options: ["img.convert()", "img.astype()", "img.cast()", "img.changetype()", "img.type()"], correct: 1 },
+            { q: "NumPy'da çok boyutlu bir diziyi tek boyutlu bir dizi haline getirmek için hangi metot kullanılır?", options: ["img.flat()", "img.flatten()", "img.squeeze()", "img.compress()", "img.linearize()"], correct: 1 },
+            { q: "Bir NumPy dizisinin devriğini almak için hangi metot kullanılır?", options: ["img.transpose()", "img.flip()", "img.rotate()", "img.reverse()", "img.swap()"], correct: 0 },
+            { q: "NumPy dizisinde elemanları belirli bir değerle kırpmak için hangi fonksiyon kullanılır?", options: ["np.limit()", "np.clip()", "np.trim()", "np.bound()", "np.cut()"], correct: 1 },
+            { q: "Python'da bir görüntüyü NumPy dizisi olarak okumak için en yaygın kullanılan kütüphane hangisidir?", options: ["Matplotlib", "OpenCV", "Pandas", "Scikit-learn", "TensorFlow"], correct: 1 },
+            { q: "Python'da OpenCV kütüphanesi nasıl içe aktarılır?", options: ["import opencv", "import cv2", "import open_cv", "include cv2", "import OpenCV2"], correct: 1 },
+            { q: "Bir görüntüyü cv2.imwrite ile kaydederken JPEG sıkıştırma kalitesini %90 olarak ayarlamak için hangi parametre kullanılır?", options: ["[cv2.IMWRITE_JPEG_QUALITY, 90]", "quality = 90", "compression = 90", "[cv2.JPEG_QUALITY, 0.9]", "cv2.setQuality(90)"], correct: 0 },
+            { q: "Bir görüntüyü diske kaydederken cv2.imwrite dosya formatı neye göre belirlenir?", options: ["cv2.imwrite fonksiyonunun ikinci parametresine göre", "Görüntünün boyutuna göre", "Görüntünün çözünürlüğüne göre", "Dosya adında kullanılan uzantıya göre", "Yalnızca PNG formatında kaydedilebilir"], correct: 3 },
+            { q: "Bir görüntüyü diske kaydetmek için kullanılan fonksiyon hangisidir?", options: ["cv2.save()", "cv2.imwrite()", "cv2.export()", "cv2.write()", "cv2.dump()"], correct: 1 },
+            { q: "cv2.imread('resim.jpg', 0) ne yapar?", options: ["Renkli okur", "Gri tonlamalı okur", "Siyah-beyaz okur", "Transparan okur", "Hata verir"], correct: 1 },
+            { q: "cv2.imread fonksiyonu ile bir görüntü yüklenirken, görüntüyü direkt olarak gri tonlamalı yüklemek için hangi parametre kullanılır?", options: ["cv2.IMREAD_COLOR", "cv2.IMREAD_UNCHANGED", "cv2.IMREAD_GRAYSCALE", "cv2.IMREAD_RGB", "cv2.IMREAD_LOAD"], correct: 2 },
+            { q: "Aşağıdakilerden hangisi bir görüntüyü dosyadan okumak için kullanılır?", options: ["cv2.loadImage()", "cv2.imread()", "cv2.readImage()", "cv2.openImage()", "cv2.getImage()"], correct: 1 },
+            { q: "OpenCV'de resmi göstermek için hangi fonksiyon kullanılır?", options: ["cv2.imshow()", "cv2.display()", "cv2.showimage()", "cv2.plot()", "cv2.view()"], correct: 0 },
+            { q: "plt.imshow() fonksiyonu hangi kütüphaneye aittir?", options: ["cv2", "numpy", "matplotlib", "pillow", "skimage"], correct: 2 },
+            { q: "plt.imshow(img, cmap='gray') ifadesi ne yapar?", options: ["Görüntüyü renkli gösterir", "Görüntünün histogramını çizer", "Görüntüyü gri tonlu olarak gösterir", "Görüntüyü kaydeder", "Görüntüyü döndürür"], correct: 2 },
+            { q: "Python'da görüntüleri matplotlib ile göstermek için hangi fonksiyon kullanılır?", options: ["plt.show(img)", "plt.imshow(img)", "plt.display(img)", "plt.image(img)", "plt.showimage(img)"], correct: 1 },
+            { q: "OpenCV'de resmi ekranda göstermek için hangi fonksiyon kullanılır?", options: ["cv2.show(img)", "cv2.imshow('window name', img)", "cv2.display(img)", "cv2.showimage(img)", "cv2.view(img)"], correct: 1 },
+            { q: "Görüntüdeki kenarları vurgulamak için hangi işlem daha keskin sonuç verir?", options: ["Gaussian Blur", "MedianBlur", "Laplacian", "BilateralFilter", "Resize"], correct: 2 },
+            { q: "Bir görüntüyü yeniden boyutlandırırken, En Yakın Komşu interpolasyonu kullanmanın temel avantajı nedir?", options: ["En yüksek görüntü kalitesini sunması", "Kenarları en yumuşak hale getirmesi", "İşlem hızının en yüksek olması", "Moire desenlerini yok etmesi", "Dosya boyutunu küçültmesi"], correct: 2 },
+            { q: "Görüntü matrisindeki piksel değerlerini belirli bir aralığa ölçeklemek için hangi fonksiyon kullanılır?", options: ["cv2.scaleAdd()", "cv2.convertScaleAbs()", "cv2.normalize()", "cv2.remap()", "cv2.resize()"], correct: 2 },
+            { q: "cv2.resize fonksiyonunda fx=2 ve fy=2 parametreleri kullanılırsa görüntü boyutu nasıl değişir?", options: ["Görüntü yatayda 2 birim kayar", "Görüntü dikeyde 2 birim kayar", "Görüntünün hem genişliği hem de yüksekliği 2 katına çıkar", "Görüntü 2x2 boyutuna küçülür", "Görüntü 2 derece döner"], correct: 2 },
+            { q: "Python'da bir görüntüyü yeniden boyutlandırmak için hangi fonksiyon kullanılır?", options: ["cv2.resize()", "cv2.scale()", "cv2.zoom()", "cv2.stretch()", "cv2.crop"], correct: 0 },
+            { q: "OpenCV'de görüntü boyutunu orantılı küçültmek için hangi parametre kullanılır?", options: ["fx ve fy", "width ve height", "scaleX ve scaleY", "resizeRatio", "ratio"], correct: 0 },
+            { q: "OpenCV'de bir görüntüyü normalize etmek için hangi fonksiyon kullanılır?", options: ["cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX)", "cv2.equalizeHist(img)", "cv2.adjustContrast(img)", "cv2.scale(img)", "cv2.resize(img)"], correct: 0 },
+            { q: "cv2.Gaussian Blur (img, (5,5), 0) ne yapar?", options: ["Resmi keskinleştirir", "Resmi griye çevirir", "Gauss bulanıklaştırma uygular", "Resmi döndürür", "Resmi kaydeder"], correct: 2 },
+            { q: "Bir görüntüdeki gürültüyü azaltmak veya görüntüyü yumuşatmak için kullanılan Gauss bulanıklaştırma işlemi hangi fonksiyonla gerçekleştirilir?", options: ["cv2.blurGaussian()", "cv2.smooth()", "cv2.GaussianBlur()", "cv2.filterBlur()", "cv2.reduceNoise()"], correct: 2 },
+            { q: "Aşağıdaki bulanıklaştırma filtrelerinden hangisi, bir pikselin yeni değerini belirlerken çevresindeki piksellerin ortanca değerini kullanır?", options: ["Ortalama Bulanıklaştırma", "Gauss Bulanıklaştırma", "Medyan Bulanıklaştırma", "Bilateral Filtre", "Kutu Filtresi"], correct: 2 },
+            { q: "Gauss filtresinde cv2.Gaussian Blur kullanılan sigma değeri neyi kontrol eder?", options: ["Filtreleme çekirdeğinin (kernel) boyutunu", "Bulanıklaştırmanın gücünü ve etki alanını", "Görüntüdeki renk sayısını", "Görüntünün döndürme açısını", "Algoritmanın çalışma hızını"], correct: 1 },
+            { q: "OpenCV'de görüntüyü bulanıklaştırmak için hangisi uygundur?", options: ["cv2.blur(img, (5,5))", "cv2.medianBlur(img)", "cv2.GaussianBlur(img, (5,5), 0)", "cv2.bilateralFilter (img, 9, 75, 75)", "Hepsi"], correct: 4 },
+            { q: "OpenCV'de bir görüntüyü medyan filtre ile yumuşatmak için hangi fonksiyon kullanılır?", options: ["cv2.median()", "cv2.medianFilter()", "cv2.medianBlur()", "cv2.smoothMedian()", "cv2.filter2D()"], correct: 2 },
+            { q: "cv2.medianBlur fonksiyonunda kullanılan çekirdek boyutu parametresi için geçerli olan matematiksel kural nedir?", options: ["Herhangi bir pozitif sayı olabilir", "Sadece çift sayı olmalıdır (2, 4, 6...)", "1'den büyük bir tek tamsayı olmalıdır (3, 5, 7...)", "Negatif bir sayı olmalıdır", "Ondalıklı sayı olabilir"], correct: 2 },
+            { q: "Görüntü İşlemede kullanılan cv2.medianBlur filtresi, özellikle hangi tür gürültüyü temizlemede çok etkilidir?", options: ["Gauss gürültüsünü", "Tuz ve Biber gürültüsünü", "Frekans gürültüsünü", "Sadece parlaklık gürültüsünü", "Renk gürültüsünü"], correct: 1 },
+            { q: "Bir görüntüdeki nesnelerin dış sınırlarını bulmak için kullanılan fonksiyon hangisidir?", options: ["cv2.findContours()", "cv2.drawContours()", "cv2.HoughLines()", "cv2.matchShapes()", "cv2.cornerHarris()"], correct: 0 },
+            { q: "OpenCV'de görüntü üzerinde şekil tespiti için hangi yöntem kullanılır?", options: ["cv2.findContours()", "cv2.cornerHarris()", "cv2.GaussianBlur()", "cv2.equalizeHist()", "cv2.resize()"], correct: 0 },
+            { q: "cv2.HoughLines fonksiyonu görüntü işlemede ne amaçla kullanılır?", options: ["Daireleri tespit etmek için", "Doğrusal çizgileri tespit etmek için", "Köşeleri bulmak için", "Yüz tespiti yapmak için", "Arka planı silmek için"], correct: 1 },
+            { q: "OpenCV'de bir görüntüyü eşikleme işlemine tabi tutmak için hangi fonksiyon kullanılır?", options: ["cv2.threshold()", "cv2.binarize()", "cv2.limit()", "cv2.cutoff()", "cv2.segment()"], correct: 0 },
+            { q: "cv2.threshold(img, 127, 255, cv2.THRESH_BINARY) ne yapar?", options: ["Resmi bulanıklaştırır", "Resmi griye çevirir", "İkili görüntü oluşturur", "Resmi döndürür", "Resmi keskinleştirir"], correct: 2 },
+            { q: "Python'da bir görüntüdeki kenarları vurgulamak için hangi işlem kullanılır?", options: ["Blurring", "Thresholding", "Edge Detection", "Dilation", "Erosion"], correct: 2 },
+            { q: "Görüntüde açma (Opening) işlemi hangi sırayla uygulanır?", options: ["Genişleme -> Erozyon", "Erozyon -> Genişleme", "Blur -> Threshold", "Threshold -> Erozyon", "Erozyon -> Blur"], correct: 1 },
+            { q: "Görüntüde kapama (Closing) işlemi hangi sırayla uygulanır?", options: ["Genişleme -> Erozyon", "Erozyon -> Genişleme", "Blur -> Threshold", "Threshold -> Erozyon", "Erozyon -> Blur"], correct: 0 },
+            { q: "Python'da OpenCV ile bir görüntüde hareket algılamak için hangi yöntem yaygındır?", options: ["Background Subtraction", "GaussianBlur", "Histogram Equalization", "Median Filter", "Thresholding"], correct: 0 },
+            { q: "OpenCV'de renk eşikleme yapmak için hangi fonksiyon kullanılır?", options: ["cv2.inRange(img, lower, upper)", "cv2.colorThreshold(img)", "cv2.thresholdColor(img)", "cv2.maskColor(img)", "cv2.filterColor(img)"], correct: 0 },
+            { q: "Görüntüdeki belirli bir renk aralığını maskelemek için hangi fonksiyon kullanılır?", options: ["cv2.threshold()", "cv2.colorMask()", "cv2.inRange()", "cv2.rangeMask()", "cv2.maskColor()"], correct: 2 },
+            { q: "cv2.threshold fonksiyonu temel olarak ne amaçla kullanılır?", options: ["Görüntüyü bulanıklaştırmak için", "Görüntüyü döndürmek için", "Görüntüyü ikili hale getirmek veya eşikleme yapmak için", "Görüntünün histogramını çıkarmak için", "Görüntüdeki yüzleri bulmak için"], correct: 2 },
+            { q: "cv2.threshold fonksiyonunun döndürdüğü ilk değer nedir?", options: ["Eşiklenmiş görüntü", "Uygulanan eşik değeri (ret)", "Piksel sayısı", "Ortalama değer", "Histogram"], correct: 1 },
+            { q: "cv2.threshold fonksiyonu kaç değer döndürür?", options: ["1", "2", "3", "4", "5"], correct: 1 },
+            { q: "cv2.threshold() fonksiyonunun döndürdüğü ikinci değer nedir?", options: ["Eşik değeri", "Piksel sayısı", "Eşiklenmiş görüntü", "Ortalama", "Renk kanalı"], correct: 2 },
+            { q: "Eşikleme işleminde threshold değeri altında kalan pikseller genelde ne olur?", options: ["Renkleri değişir", "Silinir", "255 yapılır", "0 yapılır", "Saydam olur"], correct: 3 },
+            { q: "Python'da OpenCV ile yüz algılamak için hangi yöntem yaygındır?", options: ["Haar Cascade Classifier", "Canny Edge", "Thresholding", "GaussianBlur", "Histogram Equalization"], correct: 0 },
+            { q: "OpenCV'de görüntü kanallarını ayırmak için hangi fonksiyon kullanılır?", options: ["cv2.separate()", "cv2.split()", "cv2.divide()", "cv2.extract()", "cv2.decompose()"], correct: 1 },
+            { q: "cv2.split fonksiyonu ile ayrılmış renk kanallarını tekrar tek bir renkli görüntü haline getirmek için hangi fonksiyon kullanılır?", options: ["cv2.combine()", "cv2.join()", "cv2.mixChannels()", "cv2.merge()", "cv2.unite()"], correct: 3 },
+            { q: "OpenCV'de bir görüntüyü aynalama işlemi için hangi fonksiyon kullanılır?", options: ["cv2.mirror", "cv2.flip()", "cv2.reverse", "cv2.reflect()", "cv2.invert()"], correct: 1 },
+            { q: "Python'da görüntüyü 90 derece saat yönünde döndürmek için doğru komut hangisidir?", options: ["cv2.rotate(img, 0)", "cv2.turn(img, 90)", "cv2.flip(img, 90)", "cv2.angle(img, 90)", "cv2.transform(img, 90)"], correct: 0 },
+            { q: "np.flip(img, 0) işlemi ne yapar?", options: ["Yatay çevirme", "Dikey çevirme (x eksenine göre)", "Döndürme", "Maskeleme", "Karıştırma"], correct: 1 },
+            { q: "Python'da bir görüntüyü yatay eksende çevirmek için hangi kod kullanılır?", options: ["cv2.flip(img, 0)", "cv2.flip(img, 1)", "cv2.flip(img, -1)", "cv2.rotate(img, 90)", "cv2.transpose(img)"], correct: 1 },
+            { q: "Python'da bir görüntüyü yatay ve dikey eksende çevirmek için hangi kod kullanılır?", options: ["cv2.flip(img, 0)", "cv2.flip(img, 1)", "cv2.flip(img, -1)", "cv2.rotate(img, 90)", "cv2.transpose(img)"], correct: 2 },
+            { q: "OpenCV'de bir görüntüye daire çizmek için hangi fonksiyon kullanılır?", options: ["cv2.circle(img, (x,y), r, color, thickness)", "cv2.drawCircle(img, x, y, r)", "cv2.ellipse(img, (x,y), r)", "cv2.dot(img, (x,y), r)", "cv2.drawEllipse(img, (x,y), r)"], correct: 0 },
+            { q: "Görüntü üzerinde bir dikdörtgen çizmek için kullanılan fonksiyon hangisidir?", options: ["cv2.circle()", "cv2.ellipse()", "cv2.polylines()", "cv2.rectangle()", "cv2.line()"], correct: 3 },
+            { q: "cv2.rectangle veya cv2.circle gibi fonksiyonlarla bir şekil çizerken, şeklin içini tamamen doldurmak için thickness parametresine hangi değer verilir?", options: ["0", "1", "-1", "100", "cv2.FILLED"], correct: 2 },
+            { q: "Görüntü üzerine bir daire çizmek için kullanılan cv2.circle fonksiyonunda zorunlu olarak verilmesi gereken geometrik parametreler hangileridir?", options: ["Merkez koordinatı ve Yarıçap", "Sol üst köşe ve Sağ alt köşe", "Başlangıç noktası ve Bitiş noktası", "Çap ve Çevre", "Açı ve Uzunluk"], correct: 0 },
+            { q: "Görüntüdeki daire şeklindeki nesneleri tespit etmek için cv2.HoughCircles fonksiyonu hangi yöntemi temel alır?", options: ["Hough Gradient Method", "K-Nearest Neighbors", "Support Vector Machine", "Fourier Transform", "Laplacian Pyramid"], correct: 0 },
+            { q: "cv2.circle veya cv2.line gibi çizim fonksiyonlarında, çizginin tırtıklı görünmesini engelleyerek daha pürüzsüz olmasını sağlayan çizgi tipi parametresi hangisidir?", options: ["cv2.LINE_SMOOTH", "cv2.LINE_4", "cv2.LINE_8", "cv2.LINE_AA", "cv2.LINE_HQ"], correct: 3 },
+            { q: "cv2.HoughCircles fonksiyonu neyi tespit eder?", options: ["Dikey çizgiler", "Kareler", "Daireler", "Üçgenler", "Renk geçişleri"], correct: 2 },
+            { q: "Görüntüdeki nesnelerin konumunu ve yönünü belirlemek için hangi bilgi kullanılır?", options: ["Görüntü histogramı", "Görüntü boyutu", "cv2.moments()", "cv2.threshold()", "cv2.resize"], correct: 2 },
+            { q: "Python'da bir görüntüye elips çizmek için hangi fonksiyon kullanılır?", options: ["cv2.ellipse()", "cv2.drawEllipse()", "cv2.plotEllipse()", "cv2.rounded()", "cv2.oval()"], correct: 0 },
+            { q: "Görüntüdeki nesneleri sınırlayan elipsi bulmak için hangi fonksiyon kullanılır?", options: ["cv2.fitEllipse()", "cv2.drawEllipse()", "cv2.ellipseFit()", "cv2.findEllipse()", "cv2.minEllipse()"], correct: 0 },
+            { q: "cv2.rectangle(img, pt1, pt2, color, thickness) fonksiyonunda pt1 ve pt2 parametreleri neyi temsil eder?", options: ["Merkezi koordinatlar", "Dikdörtgenin sol üst ve sağ alt köşe koordinatlarını", "Dikdörtgenin genişliği ve yüksekliği", "Dikdörtgenin döndürme açısını", "Görüntünün boyutunu"], correct: 1 },
+            { q: "Görüntüdeki nesneleri sınırlayan dikdörtgeni bulmak için hangi fonksiyon kullanılır?", options: ["cv2.rectangle()", "cv2.boundingBox()", "cv2.minRect()", "cv2.boundingRect()", "cv2.box()"], correct: 3 },
+            { q: "Görüntü üzerinde bir metin yazdırmak için hangi fonksiyon kullanılır?", options: ["cv2.writeText()", "cv2.drawText()", "cv2.addText()", "cv2.putText()", "cv2.print()"], correct: 3 },
+            { q: "OpenCV'de kameradan görüntü alırken video yakalama objesi oluşturmak için kullanılan sınıf hangisidir?", options: ["cv2.Video()", "cv2.Capture()", "cv2.VideoCapture()", "cv2.Camera()", "cv2.Webcam()"], correct: 2 },
+            { q: "Bir video dosyasını cv2.VideoCapture ile okurken, videonun sonuna gelindiğini cap.read fonksiyonunun dönüş değerleri nasıl olur?", options: ["Fonksiyon hata fırlatır", "Görüntü matrisi tamamen siyah olur", "İlk dönüş değeri False, ikinci değer (frame) None olur", "FPS değeri 0 olur", "Video otomatik olarak başa sarar"], correct: 2 },
+            { q: "Python'da OpenCV ile video karelerini kaydetmek için hangi sınıf kullanılır?", options: ["cv2.VideoWriter", "cv2.VideoCapture", "cv2.VideoSave", "cv2.VideoRecord", "cv2.VideoOutput"], correct: 0 },
+            { q: "Bilgisayar kamerasından canlı görüntü almak için hangi sınıf başlatılmalıdır?", options: ["cv2.Camera()", "cv2.Webcam()", "cv2.VideoCapture(0)", "cv2.Stream()", "cv2.Live()"], correct: 2 },
+            { q: "OpenCV ile video akışından kareleri almak için hangi fonksiyon kullanılır?", options: ["cap.read()", "cap.get()", "cv2.readVideo()", "cap.frame()", "cv2.captureFrame()"], correct: 0 },
+            { q: "OpenCV ile bir videodan kare alırken hangi fonksiyon kullanılır?", options: ["ret, frame = cap.read()", "frame = cap.get()", "frame = cap.capture()", "frame = cv2.readVideo()", "frame = cap.frame()"], correct: 0 },
+            { q: "cv2.VideoWriter kullanırken karşılaşılan en yaygın hata sebebi nedir?", options: ["Dosya isminin kısa olması", "Videonun siyah beyaz olması", "cv2.VideoWriter içine girilen boyut ile frame boyutunun birebir uyuşmaması", "FPS değerinin 30 olması", "Python sürümünün eski olması"], correct: 2 },
+            { q: "OpenCV ile video kaydederken FPS parametresi hangi sıradadır?", options: ["cv2.VideoWriter('output.avi', fourcc, fps, (w,h))", "cv2.VideoWriter('output.avi', fps, fourcc, (w,h))", "cv2.VideoWriter('output.avi', (w,h), fps, fourcc)", "cv2.VideoWriter('output.avi', fourcc, (w,h), fps)", "cv2.VideoWriter('output.avi', fps, (w,h), fourcc)"], correct: 0 },
+            { q: "cv2.waitKey(0) komutunun işlevi nedir?", options: ["Programı 0 milisaniye bekletir ve kapatır", "Sadece '0' tuşuna basılmasını bekler", "Bir tuşa basılana kadar pencereyi açık tutar", "Görüntüyü 0 derece döndürür", "Videoyu başa sarar"], correct: 2 },
+            { q: "Video işleme bittiğinde, kamerayı veya video dosyasını serbest bırakmak için hangi metot çağrılmalıdır?", options: ["cap.close()", "cap.stop()", "cap.delete()", "cap.release()", "cap.end()"], correct: 3 },
+            { q: "Bir video dosyasının belirli bir milisaniyesine doğrudan gitmek için cap.set fonksiyonuna hangi özellik verilmelidir?", options: ["cv2.CAP_PROP_POS_MSEC", "cv2.CAP_PROP_FPS", "cv2.CAP_PROP_FRAME_WIDTH", "cv2.CAP_PROP_FORMAT", "cv2.CAP_PROP_FOURCC"], correct: 0 },
+            { q: "Temel Bileşenler Analizi (PCA), görüntü işlemede genellikle ne amaçla kullanılır?", options: ["Görüntüyü bulanıklaştırmak için", "Görüntünün boyutunu artırmak için", "Nesnenin yönelimini bulmak ve boyut indirgemek için", "Renk doygunluğunu artırmak için", "Video kaydetmek için"], correct: 2 },
+            { q: "Bir videonun FPS değerini öğrenmek için cap.get fonksiyonuna hangi özellik kodu verilmelidir?", options: ["cv2.CAP_PROP_FRAME_WIDTH", "cv2.CAP_PROP_POS_MSEC", "cv2.CAP_PROP_FPS", "cv2.CAP_PROP_FRAME_COUNT", "cv2.CAP_PROP_FOURCC"], correct: 2 },
+            { q: "OpenCV'de video akışı sırasında pencereyi kapatmak için hangi fonksiyon kullanılır?", options: ["cv2.destroyAllWindows()", "cv2.closeWindows()", "cv2.endVideo()", "cv2.stopVideo()", "cv2.quit()"], correct: 0 },
+            { q: "OpenCV ile video kaydı başlatırken FPS parametresi neyi belirler?", options: ["Saniyedeki kare sayısını", "Video codec", "Boyut", "Renk formatı", "Kare sayısı"], correct: 0 },
+            { q: "Histogram eşitleme işlemi genellikle hangi tip görüntülerde daha etkili sonuç verir?", options: ["Yüksek kontrastlı görüntülerde", "Çok aydınlık veya çok karanlık (düşük kontrastlı) görüntülerde", "Zaten mükemmel kontrasta sahip görüntülerde", "Sadece renkli görüntülerde", "Sadece video akışlarında"], correct: 1 },
+            { q: "Histogram eşitleme işlemi görüntüde ne sağlar?", options: ["Gürültüyü artırır", "Renkleri değiştirir", "Kontrastı artırır", "Görüntüyü döndürür", "Görüntüyü kırpar"], correct: 2 },
+            { q: "Bir görüntüdeki piksellerin yoğunluk dağılımını gösteren grafiğe ne ad verilir?", options: ["Spektrogram", "Histogram", "Osilogram", "Radyogram", "Scatter Plot"], correct: 1 },
+            { q: "Bir görüntünün histogramını hesaplamak için cv2.calcHist fonksiyonu kullanılırken, images parametresi neden köşeli parantez içinde [img] olarak verilir?", options: ["Çünkü fonksiyon her zaman bir liste bekler", "Yanlışlıkla birden fazla resim verilmesin diye", "NumPy dizisi olduğu için", "Renkli görüntü olduğu için", "Bu bir yazım hatasıdır, parantez gerekmez"], correct: 0 },
+            { q: "cv2.calcHist() fonksiyonunda maske parametresi None olarak verilirse hesaplama nasıl yapılır?", options: ["Görüntünün sadece orta kısmı için histogram hesaplanır", "Görüntünün tamamı için histogram hesaplanır", "Histogram hesaplanmaz, hata döner", "Görüntü gri tonlamaya çevrilir", "Rastgele bir bölge seçilir"], correct: 1 },
+            { q: "Bir görüntünün histogramını hesaplamak için hangi OpenCV fonksiyonu kullanılır?", options: ["cv2.histImage()", "cv2.calcHistogram()", "cv2.calcHist()", "cv2.imageHist()", "cv2.histCalc()"], correct: 2 },
+            { q: "Bir görüntünün histogramını hesaplamak temel olarak neyi gösterir?", options: ["Görüntüdeki nesnelerin şeklini", "Görüntüdeki her bir piksel değerinin ne kadar sıklıkta bulunduğu", "Görüntüdeki renk tonlarının ortalamasını", "Görüntünün dosya boyutunu", "Görüntünün çözünürlüğünü"], correct: 1 },
+            { q: "plt.title('Resim') fonksiyonu ne işe yarar?", options: ["Görüntüyü kaydeder", "Görüntüye başlık ekler", "Görüntüyü gri yapar", "Görüntüyü büyütür", "Histogram çizer"], correct: 1 },
+            { q: "Aşağıdakilerden hangisi görüntü gürültüsü türlerinden biri değildir?", options: ["Gaussian noise", "Salt & Pepper noise", "Speckle noise", "Histogram noise", "Poisson noise"], correct: 3 },
+            { q: "img.dtype ifadesi bir görüntü hakkında neyi verir?", options: ["Piksel toplamını", "Görüntünün genişliğini", "Veri tipini", "Kanal sayısını", "Histogram türünü"], correct: 2 },
+            { q: "Python'da bir görüntüdeki piksel değerlerini normalize etmek için hangi fonksiyon kullanılır?", options: ["cv2.normalize()", "cv2.equalizeHist()", "cv2.scale()", "cv2.adjust()", "cv2.balance()"], correct: 0 },
+            { q: "Görüntü histogramı eşitleme işlemi renkli görüntüde uygulanacaksa önce ne yapılmalıdır?", options: ["Renk uzayı değiştirilir (örn: RGB -> YUV/HSV)", "Görüntü döndürülür", "Görüntü kırpılır", "Görüntü boyutlandırılır", "Görüntü kaydedilir"], correct: 0 },
+            { q: "OpenCV'de görüntü üzerinde median blur uygulamanın amacı nedir?", options: ["Gürültüyü azaltmak", "Kenarları keskinleştirmek", "Histogram eşitlemek", "Renkleri değiştirmek", "Kontrast artırmak"], correct: 0 },
+            { q: "OpenCV ile yüz tespiti sonrası hangi işlem genellikle yapılır?", options: ["Dikdörtgen çizmek", "Gaussian blur uygulamak", "Kenar algılamak", "Histogram eşitlemek", "Renk uzayını değiştirmek"], correct: 0 },
+            { q: "OpenCV'de bir görüntüyü Gaussian blur ile bulanıklaştırırken hangi parametre zorunludur?", options: ["Kernel boyutu", "Renk kanalı", "Sigma", "Histogram", "Boyut"], correct: 0 },
+            { q: "Görüntü histogramı eşitleme işlemi renkli görüntüde hangi renk uzayında yapılabilir?", options: ["RGB", "HSV (Value kanalı)", "LAB", "BGR", "CMYK"], correct: 1 },
+            { q: "Python'da görüntü histogramı çizmek için hangi kütüphane kullanılır?", options: ["pandas", "seaborn", "matplotlib", "flask", "tkinter"], correct: 2 },
+            { q: "Python ile görüntü işleme sırasında performansı artırmak için numpy ile birlikte hangi kütüphane kullanılabilir?", options: ["math", "pandas", "numba", "scipy", "matplotlib"], correct: 2 },
+            { q: "HSV renk uzayındaki 'H' harfi neyi temsil eder?", options: ["Height", "Hue (Renk Tonu)", "High", "Heat", "Histogram"], correct: 1 },
+            { q: "cv2.equalizeHist fonksiyonu hangi tür görüntülerde çalışır?", options: ["RGB görüntüler", "HSV görüntüler", "Tek kanallı (gri tonlamalı) görüntüler", "16-bit görüntüler", "Renkli PNG görüntüler"], correct: 2 },
+            { q: "Görüntü histogramı çiziminde hangi renk kanalı için histogram alınabilir?", options: ["Sadece gri", "Sadece RGB", "Her kanal ayrı ayrı", "Sadece HSV", "Sadece LAB"], correct: 2 },
+            { q: "Görüntü histogramı eşitleme işlemi hangi görüntü türünde daha etkilidir?", options: ["Renkli", "Gri tonlamalı", "HSV", "LAB", "RGB"], correct: 1 },
+            { q: "Bir görüntünün kontrastını histogram eşitleme yöntemiyle artırmak için hangi fonksiyon kullanılır?", options: ["cv2.increaseContrast()", "cv2.histEqual()", "cv2.normalize()", "cv2.equalizeHist()", "cv2.stretch()"], correct: 3 },
+            { q: "Bir görüntünün histogramının geniş olması neyi gösterir?", options: ["Renk bozulması", "Düşük kontrast", "Yüksek kontrast", "Gürültü miktarı", "Gamma değeri"], correct: 2 },
+            { q: "Histogram eşitleme işleminden sonra görüntünün genellikle nasıl değiştiği söylenebilir?", options: ["Daha gürültülü olur", "Daha karanlık olur", "Kontrastı artar", "Kanal sayısı artar", "Çözünürlük artar"], correct: 2 },
+            { q: "İki histogramın birbirine ne kadar benzediğini kıyaslamak için hangi fonksiyon kullanılır?", options: ["cv2.matchHist()", "cv2.histDiff()", "cv2.compareHist()", "cv2.checkHist()", "cv2.calcHistDiff()"], correct: 2 },
+            { q: "Bir görüntünün kopyasını oluşturmak için hangi metot kullanılır?", options: ["img.copy", "img.copy()", "img.duplicate()", "copy(img)", "img.replicate()"], correct: 1 },
+            { q: "İki görüntüyü dikey olarak birleştirmek için NumPy'de hangi ifade kullanılır?", options: ["np.merge(img1, img2)", "np.concatenate((img1, img2), axis=0)", "np.append(img1, img2)", "np.add(img1, img2)", "np.vstack((img1, img2))"], correct: 4 },
+            { q: "OpenCV'de iki görüntüyü üst üste bindirmek (blend) için hangi fonksiyon uygundur?", options: ["cv2.addWeighted(img1, alpha, img2, beta, gamma)", "cv2.overlay(img1, img2)", "np.hstack([img1, img2])", "cv2.merge(img1, img2)", "cv2.blend(img1, img2)"], correct: 0 },
+            { q: "İki görüntüyü toplarken cv2.add fonksiyonu kullanmak ile standart + operatörü kullanmak arasındaki fark nedir?", options: ["Fark yoktur", "cv2.add() doygunluğa bakar (255'i geçemez), + operatörü mod alma işlemi yapar", "cv2.add() sadece gri tonlamalı resimlerde çalışır", "+ operatörü daha yavaştır", "cv2.add() görüntüleri otomatik olarak yeniden boyutlandırır"], correct: 1 },
+            { q: "Bir görüntüde, küçük beyaz gürültü noktalarını silmek ve konturları yumuşatmak için hangi morfolojik işlem kombinasyonu kullanılır?", options: ["Kapanma", "Açılma (Opening)", "Morfolojik Gradyan", "Top Hat", "Genişletme"], correct: 1 },
+            { q: "Python'da bir görüntüdeki konturların şekil benzerliğini karşılaştırmak için hangi fonksiyon kullanılır?", options: ["cv2.matchShapes()", "cv2.compareContours()", "cv2.shapeMatch()", "cv2.contourCompare()", "cv2.similarity()"], correct: 0 },
+            { q: "img.shape ifadesi bir görüntü için neyi verir?", options: ["Piksel toplamını", "Dosya boyutunu", "Yükseklik, genişlik ve kanal sayısını", "DPI değerini", "Renk histogramını"], correct: 2 },
+            { q: "Bir görüntünün kanal sayısını öğrenmek için hangi ifade doğrudur?", options: ["img.channel", "img.channels()", "img.shape[0]", "img.shape[2]", "img.get(2)"], correct: 3 },
+            { q: "OpenCV'de görüntüyü bulanıklaştırmak için hangi fonksiyon kullanılır?", options: ["cv2.blur()", "cv2.sharp()", "cv2.smooth()", "cv2.noise()", "cv2.clean()"], correct: 0 },
+            { q: "Görüntü üzerindeki tuz-biber gürültüsünü gidermek için en etkili bulanıklaştırma yöntemi hangisidir?", options: ["Gaussian Blur", "Mean Blur", "Median Blur", "Bilateral Filter", "Box Filter"], correct: 2 },
+            { q: "OpenCV'de görüntü üzerinde kenarları belirginleştirmek için hangi filtre yaygın kullanılır?", options: ["Laplacian", "Median", "Gaussian", "Blur", "Bilateral"], correct: 0 },
+            { q: "Görüntüdeki kenarları bulmak için kullanılan Laplacian operatörü hangi türeve dayanır?", options: ["0. türev", "1. türev", "2. türev", "3. türev", "4. türev"], correct: 2 },
+            { q: "cv2.Laplacian() fonksiyonu hangi tür kenarları vurgular?", options: ["Yalnızca yatay", "Yalnızca dikey", "Hem yatay hem dikey", "Sadece eğik", "Sadece köşe"], correct: 2 },
+            { q: "OpenCV'de kenar tespiti yapmak için kullanılan fonksiyon hangisidir?", options: ["cv2.edge()", "cv2.findEdge()", "cv2.Canny()", "cv2.detect()", "cv2.sharp()"], correct: 2 },
+            { q: "cv2.Canny fonksiyonunda kullanılan eşik değerleri neyi belirler?", options: ["Kernel boyutunu", "Renk dönüşümünü", "Kenar hassasiyetini (Hysteresis Thresholding)", "Gürültü düzeyini", "Histogram çözünürlüğünü"], correct: 2 },
+            { q: "OpenCV'de okunan standart bir BGR görüntüsünün sadece Mavi kanalına erişmek için aşağıdaki NumPy dilimlemesi hangisidir?", options: ["img[:, :, 0]", "img[:, :, 1]", "img[:, :, 2]", "img[0, :, :]", "img[-1]"], correct: 0 },
+            { q: "Python'da bir görüntüdeki tüm piksellerin değerini sıfırlamak için hangi işlem yapılır?", options: ["img=255", "img[:] = 0", "img.clear()", "img = None", "img = []"], correct: 1 },
+            { q: "Python'da bir görüntüdeki tüm pikselleri beyaz yapmak için hangi kod kullanılır?", options: ["img[:] = 255", "img[:] = 0", "img[:] = -1", "img[:] = True", "img[:] = 128"], correct: 0 },
+            { q: "Görüntüdeki tüm pikselleri ters çevirmek için hangi işlem yapılır?", options: ["255 - img", "img * -1", "img[::-1]", "img.not()", "img.invert()"], correct: 0 },
+            { q: "Bir görüntüyü x ekseninde 50, y ekseninde 100 piksel kaydırmak için oluşturulması gereken 2x3'lük dönüşüm matrisi aşağıdakilerden hangisidir?", options: ["[[1, 0, 100], [0, 1, 50]]", "[[1, 0, 50], [0, 1, 100]]", "[[0, 1, 50], [1, 0, 100]]", "[[50, 0, 1], [100, 1, 0]]", "[[1, 1, 50], [1, 1, 100]]"], correct: 1 },
+            { q: "Görüntüde ROI seçimi sonrası seçilen alanı almak için hangisi kullanılır?", options: ["roi = img[roi]", "roi = img[y:y+h, x:x+w]", "roi = img[x:x+w, y:y+h]", "roi = img.crop(x, y, w, h)", "roi = img.select(x, y, w, h)"], correct: 1 },
+            { q: "OpenCV'de görüntü üzerinde piksel değerini değiştirmek için hangi yöntem kullanılır?", options: ["img[y, x] = [b,g,r]", "cv2.setPixel(img, x, y, color)", "cv2.modify(img, x, y)", "img.setPixel(x, y, color)", "cv2.changePixel(img, x, y)"], correct: 0 },
+            { q: "OpenCV'de piksel değerine erişmek için hangi yapı kullanılır?", options: ["img.value()", "img[x][y]", "img[y, x]", "img.pixel(x,y)", "img.color(x,y)"], correct: 2 },
+            { q: "Matplotlib ile görüntü gösterirken renklerin ters görünmesinin nedeni nedir?", options: ["Görüntü bozuk yüklenmiştir", "Matplotlib renklerin alpha kanalını okumaz", "Matplotlib'in RGB, OpenCV'nin BGR formatı kullanması", "Çözünürlük uyumsuzluğu vardır", "NumPy dizisi hatalıdır"], correct: 2 },
+            { q: "OpenCV varsayılan olarak renkli görüntüleri hangi renk uzayında okur?", options: ["RGB", "HSV", "CMYK", "BGR", "HSL"], correct: 3 },
+            { q: "Bir görüntüdeki nesnelerin renk tonuna, doygunluğuna ve parlaklığına göre daha kolay ayrıştırılması için hangi renk uzayı tercih edilir?", options: ["RGB", "BGR", "HSV", "CMYK", "LAB"], correct: 2 },
+            { q: "Yüz tanıma veya obje takibi projelerinde sıklıkla kullanılan, görüntünün parlaklık bilgisini renk bilgisinden ayıran renk uzayı hangisidir?", options: ["BGR", "RGB", "YCrCb (veya HSV)", "GRAY", "Binary"], correct: 2 },
+            { q: "RGB renk uzayından farklı olarak YCbCr renk uzayının temel avantajı nedir?", options: ["Daha fazla renk içermesi", "Parlaklık bilgisinin renkten ayrılmış olması", "Sadece kırmızı rengi barındırması", "Python'da daha hızlı çalışması", "Matplotlib ile doğrudan uyumlu olması"], correct: 1 },
+            { q: "HSV renk uzayında, görüntünün ne kadar canlı veya donuk olduğunu yani rengin saflığını belirleyen bileşen hangisidir?", options: ["Hue (Ton)", "Saturation (Doygunluk)", "Value (Parlaklık)", "Lightness", "Intensity"], correct: 1 },
+            { q: "640x480 boyutunda, siyah renkte ve renkli formatta bir görüntü oluşturmak için doğru komutu hangisidir?", options: ["np.zeros((480, 640, 3), dtype=np.uint8)", "np.zeros((640, 480, 3), dtype=np.uint8)", "np.ones((480, 640, 3), dtype=np.uint8)", "np.empty((480, 640), dtype=np.float)", "cv2.createBlackImage(640, 480)"], correct: 0 },
+            { q: "Görüntü üzerindeki bir nokta kümesine en iyi uyan doğruyu bulmak için kullanılan fonksiyon hangisidir?", options: ["cv2.fitLine()", "cv2.drawLine()", "cv2.bestLine()", "cv2.polyFit()", "cv2.linearReg()"], correct: 0 },
+            { q: "Bir görüntüdeki nesneleri sınırlayan kutuyu çizmek için hangi bilgi gereklidir?", options: ["Kontur alanı", "Görüntü boyutu", "Dikdörtgen koordinatları (x,y,w,h)", "Histogram verisi", "Piksel yoğunluğu"], correct: 2 },
+            { q: "Python'da bir görüntüdeki konturların içini doldurmak için hangi kalınlık değeri kullanılır?", options: ["0", "1", "-1", "2", "255"], correct: 2 },
+            { q: "Python'da bir görüntüdeki konturların çizim sırasını belirlemek için hangi parametre kullanılır?", options: ["mode", "method", "hierarchy", "color", "order (contourIdx)"], correct: 4 },
+            { q: "OpenCV'de bir görüntüyü döndürmek için önce hangi işlem yapılır?", options: ["Transformasyon matrisi oluşturulur", "Görüntü kopyalanır", "Boyut değiştirilir", "Renk uzayı değiştirilir", "Kenarlar bulunur"], correct: 0 },
+            { q: "OpenCV'de iki görüntü arasındaki mutlak farkı hesaplamak için hangi fonksiyon kullanılır?", options: ["cv2.diff()", "cv2.subtract()", "cv2.absdiff()", "cv2.compare()", "cv2.minus()"], correct: 2 },
+            { q: "Python'da bir görüntüdeki renk kanallarını birleştirmek için hangi fonksiyon kullanılır?", options: ["cv2.merge()", "cv2.combineChannels()", "cv2.stackChannels()", "cv2.join()", "cv2.channelMerge()"], correct: 0 },
+            { q: "OpenCV'de iki görüntüyü yan yana birleştirmek için hangi yöntem uygundur?", options: ["np.hstack([img1, img2])", "np.vstack([img1, img2])", "cv2.merge(img1, img2)", "cv2.concat(img1, img2)", "cv2.combine(img1, img2)"], correct: 0 },
+            { q: "Bir görüntünün negatifini almak için hangi işlem kullanılır?", options: ["cv2.bitwise_and()", "cv2.bitwise_or", "cv2.bitwise_xor()", "cv2.bitwise_not()", "cv2.negate()"], correct: 3 },
+            { q: "Bir görüntünün belirli bir bölgesini bir maske kullanarak izole etmek veya sadece o bölgeyi işlemek için hangi işlem en yaygın şekilde kullanılır?", options: ["cv2.bitwise_or", "cv2.bitwise_not", "cv2.bitwise_xor", "cv2.bitwise_and", "cv2.bitwise_nand"], correct: 3 },
+            { q: "cv2.bitwise_or(img1, img2) işlemi ne yapar?", options: ["Görüntülerin kesişimini alır", "Piksel farkını alır", "Görüntülerin birleşimini alır", "Renk kanallarını değiştirir", "Histogramı birleştirir"], correct: 2 },
+            { q: "Bir görüntünün kontrastını otomatik olarak iyileştirmek için kullanılan temel yöntem hangisidir?", options: ["Medyan Bulanıklaştırma", "Histogram Eşitleme", "Canny Kenar Tespiti", "Sadece Bitwise AND işlemi", "Aşınma (Erosion)"], correct: 1 },
+            { q: "Görüntü histogramını yumuşatmak için hangi yöntem kullanılabilir?", options: ["Erosion", "Dilation", "Gaussian filtre", "Median filtre", "Bitwise işlem"], correct: 2 },
+            { q: "İki görüntüyü belli oranlarda birbiriyle harmanlamak için kullanılan ve saydamlık efekti veren fonksiyon hangisidir?", options: ["cv2.add()", "cv2.addWeighted()", "cv2.multiply()", "cv2.bitwise_or()", "cv2.resize()"], correct: 1 },
+            { q: "OpenCV'de bir resmi kayıpsız sıkıştırma yaparak kaydetmek için hangi format uygundur?", options: ["PNG", "JPEG", "BMP", "GIF", "TIFF"], correct: 0 },
+            { q: "OpenCV'de bir görüntüye kenar algılama uygulamak için hangi fonksiyon yaygındır?", options: ["cv2.Canny(img, 100, 200)", "cv2.Sobel(img)", "cv2.Laplacian(img)", "cv2.GaussianBlur(img)", "cv2.filter2D(img)"], correct: 0 },
+            { q: "Görüntüye bulanıklık efekti eklemek için kullanılan yaygın OpenCV fonksiyonu hangisidir?", options: ["cv2.Canny", "cv2.erode()", "cv2.GaussianBlur()", "cv2.dilate()", "cv2.Sobel()"], correct: 2 },
+            { q: "Python'da görüntüdeki gürültüyü azaltmak için hangi filtre kullanılır?", options: ["Median filtre", "Laplacian filtre", "Sobel filtre", "Bilateral filtre", "Threshold filtre"], correct: 0 },
+            { q: "cv2.Scharr operatörü cv2.Sobel operatörüne göre hangi durumda tercih edilir?", options: ["Daha az işlem gücü gerektiğinde", "Çekirdek boyutu 3x3 olduğunda daha hassas kenar/gradyan bulmak için", "Büyük boyutlu resimlerde", "Renkli resimlerde", "Video işlerken"], correct: 1 },
+            { q: "Canny Kenar Tespiti algoritması temel olarak hangi bilgileri birleştirerek sonuç üretir?", options: ["Renkleri ve histogramları", "Gauss filtresiyle gürültü azaltma, Sobel ile gradyan ve histerezis eşikleme", "Sadece parlaklık değişimlerini", "Sadece kırmızı kanal bilgilerini", "Morfolojik işlemleri"], correct: 1 },
+            { q: "Bir görüntüdeki pikselleri renk benzerliklerine veya konumlarına göre gruplayarak segmentasyon yapan algoritma hangisidir?", options: ["K-Means Clustering", "Canny Edge Detection", "Sobel Operator", "Erosion", "Template Matching"], correct: 0 },
+            { q: "Kenar tespit algoritmalarından hangisi, kenarların yönelimini de hesaplamak için gradyan türevlerini kullanır?", options: ["Medyan Bulanıklaştırma", "Sobel Operatörü", "Açılma (Opening)", "Hough Çizgi Tespiti", "Morfolojik Genişletme"], correct: 1 },
+            { q: "OpenCV'de bir görüntüyü bulanıklaştırırken kenarları korumak için hangi filtre kullanılır?", options: ["Bilateral Filter", "GaussianBlur", "MedianBlur", "Average Blur", "Sobel"], correct: 0 },
+            { q: "Kenar tespiti işlemlerinde yatay ve dikey türevleri (gradyanları) hesaplamak için kullanılan fonksiyon hangisidir?", options: ["cv2.Sobel()", "cv2.Canny", "cv2.Laplacian()", "cv2.Scharr", "cv2.Deriv()"], correct: 0 },
+            { q: "Python'da bir görüntüdeki gürültüyü azaltmak için hangi filtre daha etkilidir?", options: ["Sobel", "Laplacian", "Median", "Canny", "Histogram"], correct: 2 },
+            { q: "Sobel operatörü hangi amaçla kullanılır?", options: ["Renk artırma", "Gürültü giderme", "Kenar tespiti", "Parlaklık ayarlama", "Döndürme"], correct: 2 },
+            { q: "Görüntüde kenar bulmak için kullanılan Sobel filtresinin yönü nasıl belirlenir?", options: ["Kernel türüne göre", "Eşik değerine göre", "dx ve dy parametrelerine göre", "Kanal sayısına göre", "Piksel tipine göre"], correct: 2 },
+            { q: "Kenar bulmak için kullanılan Sobel operatörü hangi türev türüne dayanır?", options: ["0. türev", "1. türev", "2. türev", "3. türev", "4. türev"], correct: 1 },
+            { q: "Görüntüde dikey kenarları tespit etmek için Sobel operatöründe hangi kombinasyon kullanılır?", options: ["dx=0, dy=0", "dx=1, dy=1", "dx=1, dy=0", "dx=0, dy=2", "dx=2, dy=0"], correct: 2 },
+            { q: "Özel olarak oluşturduğunuz bir Kernel görüntüye uygulamak için hangi fonksiyon kullanılır?", options: ["cv2.applyMask()", "cv2.customFilter()", "cv2.filter2D()", "cv2.convolve()", "cv2.matrixOp()"], correct: 2 },
+            { q: "cv2.Scharr() fonksiyonu ne işe yarar?", options: ["Zoom yapar", "Renk değiştirir", "Daha hassas türev filtrelemesi yapar", "Gürültü ekler", "Görüntüyü döndürür"], correct: 2 },
+            { q: "Görüntüde gürültüyü azaltırken kenarları daha iyi koruyan filtre hangisidir?", options: ["Mean filtre", "Box filtre", "Gaussian filtre", "Median filtre", "Bilateral filtre"], correct: 4 },
+            { q: "cv2.convertScaleAbs genellikle hangi işlemde kullanılır?", options: ["Kanal ayırma", "Gürültü ekleme", "Filtre sonrası değerleri 0-255 aralığına çekme (ve mutlak değer alma)", "Maskelenmiş bölgeleri silme", "Görüntüyü kırpma"], correct: 2 },
+            { q: "cv2.bilateralFilter fonksiyonunun diğer bulanıklaştırma yöntemlerinden en önemli farkı nedir?", options: ["Çok hızlı çalışmasıdır", "Sadece siyah-beyaz resimlerde çalışmasıdır", "Kenarları koruyarak gürültüyü azaltmasıdır", "Görüntüyü keskinleştirmesidir", "Görüntüyü ters çevirmesidir"], correct: 2 },
+            { q: "NumPy kullanarak bir resmi matris olarak okumak hangi avantajı sağlar?", options: ["Dosya boyutunu küçültür", "Matematiksel işlemler ve filtreleri hızlı uygulama", "Renkleri otomatik ayarlar", "Resmi ekranda gösterir", "Resmi kaydeder"], correct: 1 },
+            { q: "Python'da bir görüntüdeki belirli bir bölgeyi seçmek için hangi yöntem kullanılır?", options: ["cv2.selectROI()", "cv2.regionSelect()", "cv2.maskArea()", "cv2.cropArea()", "cv2.areaSelect()"], correct: 0 },
+            { q: "Python'da OpenCV ile yüz tanıma yaparken hangi dosya tipi kullanılır?", options: ["XML", "JSON", "TXT", "CSV", "YAML"], correct: 0 },
+            { q: "OpenCV'de renkli görüntüyü gri tonlamaya çevirirken hangi renk kanalı daha fazla ağırlık taşır?", options: ["Yeşil", "Kırmızı", "Mavi", "Alfa", "Tüm kanallar eşit"], correct: 0 },
+            { q: "img[100:200, 50:150] işlemi ne yapar?", options: ["Görüntüyü döndürür", "Görüntüyü yeniden boyutlandırır", "Görüntüyü kesme yapar (Crop)", "Görüntüyü siler", "Görüntüyü çevirir"], correct: 2 },
+            { q: "Python'da bir görüntüdeki belirli bir bölgeyi siyah yapmak için hangi kod kullanılır?", options: ["img[100:200, 100:200] = 0", "img[100:200, 100:200] = 255", "img[100:200, 100:200] = -1", "img[100:200, 100:200] = True", "img[100:200, 100:200] = None"], correct: 0 },
+            { q: "cv2.polylines fonksiyonu ne çizmek için kullanılır?", options: ["Sadece düz bir çizgi", "Çokgenler veya birbiri ardına eklenmiş çizgiler", "Çember yayları", "Elips", "Noktalı ızgara"], correct: 1 },
+            { q: "Basit bir şeklin içini doldurmak için cv2.polylines yerine hangi fonksiyon kullanılır?", options: ["cv2.drawPoly()", "cv2.fillPoly()", "cv2.paintPoly()", "cv2.solidPoly()", "cv2.areaPoly()"], correct: 1 },
+            { q: "Hough Line Transform sonucunda çizgiler genellikle hangi koordinat sisteminde ifade edilir?", options: ["Cartesian (x, y)", "Polar (r, theta)", "Complex (Real, Imaginary)", "3D (x, y, z)", "Logarithmic"], correct: 1 },
+            { q: "Python'da bir görüntüdeki nesneleri sınırlayan çizgiyi bulmak için hangi fonksiyon kullanılır?", options: ["cv2.fitLine()", "cv2.drawLine()", "cv2.lineFit()", "cv2.findLine()", "cv2.minLine()"], correct: 0 },
+            { q: "Python'da bir görüntüye çizgi çizmek için hangi fonksiyon kullanılır?", options: ["cv2.line()", "cv2.drawLine()", "cv2.plotLine()", "cv2.traceLine()", "cv2.lineDraw()"], correct: 0 },
+            { q: "cv2.invert fonksiyonu matrisler üzerinde hangi matematiksel işlemi yapar?", options: ["Matrisin transpozunu alır", "Matrisin tersini alır", "Matrisin negatifini alır", "Matrisi sıfırlar", "Matrisi birim matrise çevirir"], correct: 1 },
+            { q: "Bir matrisin transpozunu almak için NumPy'da hangi söz dizimi kullanılır?", options: ["img.T", "img.inverse()", "img.switch()", "img.rotate()", "img.change()"], correct: 0 },
+            { q: "cv2.kmeans() algoritması çalıştırılırken criteria parametresi neyi belirtir?", options: ["Kaç küme oluşturulacağını", "Algoritmanın ne zaman duracağını", "Başlangıç noktalarının nasıl seçileceğini", "Renk uzayını", "Hata ayıklama modunu"], correct: 1 },
+            { q: "OpenCV'de görüntü bölütleme için kullanılan fonksiyonlardan biri hangisidir?", options: ["cv2.segment()", "cv2.divideImage()", "cv2.kmeans()", "cv2.cut()", "cv2.clusterImage()"], correct: 2 },
+            { q: "Python'da bir görüntünün ortanca piksel değerini bulmak için kullanılan NumPy fonksiyonu hangisidir?", options: ["np.avg()", "np.median", "np.mean()", "np.middle()", "np.center()"], correct: 1 },
+            { q: "Python'da bir görüntüdeki tüm piksellerin ortalama değerini almak için hangi fonksiyon kullanılır?", options: ["cv2.mean()", "cv2.average()", "cv2.median()", "cv2.sum()", "cv2.mode()"], correct: 0 },
+            { q: "Python'da iki görüntüyü yatay olarak birleştirmek için hangi NumPy işlemi kullanılabilir?", options: ["np.bind(img1, img2)", "np.attach(img1, img2)", "np.concatenate((img1, img2), axis=1)", "img1 + img2", "np.stack(img1, img2)"], correct: 2 },
+            { q: "Gaussian gürültüsü üretmek için kullanılan NumPy fonksiyonu hangisidir?", options: ["np.random.uniform()", "np.random.rand()", "np.random.normal()", "np.random.pixel()", "np.random.noise()"], correct: 2 },
+            { q: "Python'da bir görüntüyü tamamen sıfırlarla doldurmak için hangi NumPy yöntemi kullanılır?", options: ["np.black()", "np.null()", "np.zeros()", "np.min()", "np.clear()"], correct: 2 },
+            { q: "Python'da görüntünün veri tipini float yapmak için hangi NumPy ifadesi doğrudur?", options: ["img.astype('float')", "img.type('float')", "img.toFloat()", "float(img)", "convert.float(img)"], correct: 0 },
+            { q: "NumPy kütüphanesi ne için kullanılır?", options: ["Grafik çizimi", "Web geliştirme", "Sayısal hesaplamalar", "Dosya işlemleri", "Ses işleme"], correct: 2 },
+            { q: "Python'da bir resmi NumPy dizisine çevirdiğimizde bu dizi hangi veri tipindedir?", options: ["list", "tuple", "ndarray", "dict", "set"], correct: 2 },
+            { q: "İki görüntü arasındaki mutlak farkı hesaplayan fonksiyon hangisidir?", options: ["cv2.subtract()", "cv2.absdiff", "cv2.diff()", "cv2.minus()", "cv2.absolute()"], correct: 1 },
+            { q: "np.mean(img) komutu bir görüntü için ne döndürür?", options: ["Maximum piksel değeri", "Piksel sayısı", "Ortalama piksel değeri", "Kanal sayısı", "Görüntü boyutu"], correct: 2 },
+            { q: "Bir görüntüdeki maksimum piksel değerini bulmak için hangi fonksiyon kullanılır?", options: ["cv2.max()", "np.max(img)", "img.max()", "cv2.findMax()", "max(img)"], correct: 1 },
+            { q: "Bir görüntünün veya belirli bir bölgesinin ortalamasını ve standart sapmasını aynı anda hesaplamak için hangi fonksiyon kullanılır?", options: ["cv2.calcStats()", "cv2.meanStdDev()", "cv2.average()", "cv2.stats()", "cv2.analyze()"], correct: 1 },
+            { q: "OpenCV'de bir görüntünün veri tipini öğrenmek için hangi özellik kontrol edilir?", options: ["img.type", "img.dtype", "img.format", "img.bit", "img.class"], correct: 1 },
+            { q: "OpenCV'de, bir görüntünün sol üst köşesinin koordinatları nedir?", options: ["(1, 1)", "(Genişlik, Yükseklik)", "(0,0)", "(Genişlik, 0)", "(Yükseklik, Genişlik)"], correct: 2 },
+            { q: "Bir görüntüyü saat yönünün tersine 90 derece döndürmek için kullanılabilecek cv2.rotate() parametresi hangisidir?", options: ["cv2.ROTATE_90_CLOCKWISE", "cv2.ROTATE_90_COUNTERCLOCKWISE", "cv2.ROTATE_180", "cv2.ROTATE_0", "cv2.ROTATE_270_CLOCKWISE"], correct: 1 },
+            { q: "Hangisi dijital görüntü işleme adımlarından biri değildir?", options: ["Ön işleme", "Dönüşüm", "Özellik çıkarma", "Segmentasyon", "Derleyici optimizasyonu"], correct: 4 },
+            { q: "np.clip(img, 0, 255) işlemi ne yapar?", options: ["Piksel değerlerini sıfırlar", "Piksel değerlerini ters çevirir", "Piksel değerlerini 0-255 aralığında sınırlar", "Görüntüyü küçültür", "Görüntüyü döndürür"], correct: 2 },
+            { q: "img.size ifadesi bir görüntü hakkında neyi verir?", options: ["Boyut (yükseklik, genişlik)", "Kanal sayısı", "Toplam piksel sayısı", "Veri tipi", "Dosya boyutu"], correct: 2 },
+            { q: "LAB renk uzayındaki 'L' bileşeni neyi temsil eder?", options: ["Parlaklık yoğunluğunu (Lightness)", "Seviye değerini", "Düşük frekansları", "Laboratuvar standartlarını", "Katman sayısını"], correct: 0 },
+            { q: "Makine öğrenme algoritmalarını kullanmak için hangi OpenCV modülü kullanılır?", options: ["cv2.ai", "cv2.learning", "cv2.ml", "cv2.svm", "cv2.data"], correct: 2 },
+            { q: "Gaussian bulanıklaştırmada kernel boyutu için hangi özellik doğrudur?", options: ["Tek sayılar olmalıdır", "Çift sayılar olmalıdır", "Sıfır olmalıdır", "Her zaman 3'tür", "Önemli değildir"], correct: 0 },
+            { q: "Python'da OpenCV ile resim üzerinde çizgi çizmek için hangi parametreler zorunludur?", options: ["Başlangıç ve bitiş koordinatları, renk, kalınlık", "Başlangıç koordinatı ve renk", "Bitis koordinatı ve renk", "Kalınlık ve renk", "Koordinat ve sigma"], correct: 0 },
+            { q: "Python'da NumPy kütüphanesini içe aktarmak için hangi kod kullanılır?", options: ["import numpy", "import numpy as np", "from numpy import", "include numpy", "using numpy"], correct: 1 },
+            { q: "Gri tonlamalı bir görüntüyü, sıcaklık haritası gibi renklendirmek için hangi fonksiyon kullanılır?", options: ["cv2.cvtColor()", "cv2.applyColorMap()", "cv2.colorize()", "cv2.heatMap()", "cv2.pseudoColor()"], correct: 1 },
+            { q: "OpenCV'de bir görüntüyü HSV formatından BGR formatına dönüştürmek için hangi ifade kullanılır?", options: ["cv2.cvtColor(img, cv2.COLOR_BGR2HSV)", "cv2.cvtColor(img, cv2.COLOR_RGB2HSV)", "cv2.cvtColor(img, cv2.COLOR_HSV2BGR)", "cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)", "cv2.cvtColor(img, cv2.COLOR_HSV2GRAY)"], correct: 2 },
+            { q: "Görüntüdeki renk uzayını değiştirmek için hangi fonksiyon kullanılır?", options: ["cv2.cvtColor()", "cv2.changeColor()", "cv2.convertColor()", "cv2.colorTransform()", "cv2.colorSpace()"], correct: 0 },
+            { q: "OpenCV'de bir görüntüyü BGR'den RGB'ye çevirmek için hangi fonksiyon kullanılır?", options: ["cv2.cvtColor(img, cv2.COLOR_BGR2RGB)", "cv2.toRGB(img)", "cv2.changeColor(img)", "cv2.shiftColor(img)", "cv2.convert(img)"], correct: 0 },
+            { q: "Python'da renkli bir resmi gri tonlamaya çevirmek için hangi fonksiyon kullanılır?", options: ["cv2.toGray(img)", "cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)", "cv2.gray(img)", "cv2.cvtGray(img)", "cv2.transform(img, cv2.GRAY)"], correct: 1 },
+            { q: "Bir NumPy dizisinin boyutlarını öğrenmek için hangi özellik kullanılır?", options: ["array.size", "array.dimension", "array.shape", "array.length", "array.dims"], correct: 2 },
+            { q: "Python'da bir görüntüyü okuyan cv2.imread fonksiyonu hangi değeri döndürür?", options: ["String", "List", "NumPy array", "Tuple", "Dictionary"], correct: 2 },
+            { q: "Python'da bir görüntünün piksel değerlerini matris olarak tutmak için en çok hangi veri yapısı kullanılır?", options: ["dictionary", "list", "numpy array", "tuple", "set"], correct: 2 },
+            { q: "Matplotlib kütüphanesinde bir görüntüyü göstermek için hangi fonksiyon kullanılır?", options: ["plt.show()", "plt.display()", "plt.view()", "plt.render", "plt.present()"], correct: 0 },
+            { q: "OpenCV'de bir görüntünün genişlik ve yükseklik bilgisine nasıl erişilir?", options: ["image.width, image.height", "image.shape[0], image.shape[1]", "image.shape[1], image.shape[0] (w,h)", "image.size[0], image.size[1]", "image.dimensions()"], correct: 2 },
+            { q: "OpenCV'de bir görüntüyü kaydetmek için hangi fonksiyon kullanılır?", options: ["cv2.save()", "cv2.write()", "cv2.imwrite()", "cv2.saveImage()", "cv2.export"], correct: 2 },
+            { q: "Görüntü histogramı çiziminde hangi matplotlib fonksiyonu kullanılır?", options: ["plt.hist()", "plt.plot()", "plt.imshow()", "plt.bar()", "plt.draw()"], correct: 0 },
+            { q: "plt.hist() fonksiyonunda histogram çubuklarının sayısını belirleyen parametre hangisidir?", options: ["bars", "bins", "columns", "count", "segments"], correct: 1 },
+            { q: "plt.hist() fonksiyonunda histogram rengini belirlemek için hangi parametre kullanılır?", options: ["colour", "col", "color", "rgb", "fill"], correct: 2 },
+            { q: "plt.hist() fonksiyonunda histogramın kenar çizgisi rengini ayarlamak için hangi parametre kullanılır?", options: ["border", "edge", "edgecolor", "linecolor", "outline"], correct: 2 },
+            { q: "plt.tight_layout() fonksiyonunun amacı nedir?", options: ["Grafiği sıkıştırır", "Alt grafiklerin birbirine girmesini önler", "Grafik boyutunu küçültür", "Grafik renklerini optimize eder", "Çizim hızını artırır"], correct: 1 },
+            { q: "Histogram grafiklerini tek figürde yan yana göstermek için Matplotlib'de hangi komut kullanılır?", options: ["plt.show()", "plt.grid()", "plt.subplots()", "plt.canvas()", "plt.multi()"], correct: 2 },
+            { q: "Matplotlib'de birden fazla alt grafik oluştururken hangi fonksiyon kullanılır?", options: ["plt.subgraph()", "plt.subplot()", "plt.multiplot()", "plt.subwindow()", "plt.divide()"], correct: 1 },
+            { q: "cv2.resize() fonksiyonunda yeni boyut hangi parametre ile belirtilir?", options: ["size", "dimensions", "dsize", "newsize", "scale"], correct: 2 },
+            { q: "Tespit edilen bir konturun alanını piksel cinsinden hesaplamak için hangi fonksiyon kullanılır?", options: ["cv2.contourArea()", "cv2.calcArea()", "cv2.getArea()", "cv2.findSize()", "cv2.polyArea()"], correct: 0 },
+            { q: "Bir konturun etrafını çevreleyen çizginin toplam uzunluğunu hesaplamak için hangi fonksiyon kullanılır?", options: ["cv2.contourArea()", "cv2.arcLength()", "cv2.getPerimeter()", "cv2.contourLength()", "cv2.calculateCircumference"], correct: 1 },
+            { q: "cv2.resize fonksiyonunda en yakın komşu interpolasyonu için hangi sabit kullanılır?", options: ["cv2.INTER_NEAREST", "cv2.NEAREST", "cv2.INTER_NEIGHBOR", "cv2.INTERPOLATE_NEAREST", "cv2.NEAR"], correct: 0 },
+            { q: "Bir görüntüyü yeniden boyutlandırırken, görüntünün kalitesini koruyarak küçültmek için önerilen interpolasyon yöntemi hangisidir?", options: ["cv2.INTER_NEAREST", "cv2.INTER_LINEAR", "cv2.INTER_CUBIC", "cv2.INTER_AREA", "cv2.INTER_MAX"], correct: 3 },
+            { q: "Bir görüntüyü yeniden boyutlandırırken, görüntünün kalitesini koruyarak büyütmek için genellikle hangi interpolasyon yöntemi önerilir?", options: ["cv2.INTER_NEAREST", "cv2.INTER_AREA", "cv2.INTER_CUBIC", "cv2.INTER_MAX", "cv2.INTER_MIN"], correct: 2 },
+            { q: "cv2.resize fonksiyonunda cv2.INTER_LINEAR interpolasyon yöntemi ne amaçla kullanılır?", options: ["En düşük kalite ve en hızlı yeniden boyutlandırma", "Varsayılan interpolasyon yöntemidir ve büyütme/küçültmede makul bir kalite sunar", "Sadece küçültme için kullanılır", "Sadece büyütme için kullanılır", "Sadece Medyan filtrelemesi yapar"], correct: 1 },
+            { q: "cv2.resize fonksiyonunda yeniden boyutlandırma algoritmasını belirten interpolation parametresi için aşağıdakilerden hangisi bir seçenek değildir?", options: ["cv2.INTER_LINEAR", "cv2.INTER_CUBIC", "cv2.INTER_AREA", "cv2.INTER_NEAREST", "cv2.INTER_FAST"], correct: 4 }
+        ];
+
+        // --- APP STATE ---
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let wrongAnswers = [];
+        let userAnswers = []; // Kullanıcının cevaplarını tutar
+        let checkedAnswers = []; // Cevapların kontrol edilip edilmediğini tutar
+        let isReviewMode = false;
+
+        // --- DOM ELEMENTS ---
+        const questionText = document.getElementById("question-text");
+        const optionsList = document.getElementById("options-list");
+        const checkBtn = document.getElementById("check-btn");
+        const nextBtn = document.getElementById("next-btn");
+        const prevBtn = document.getElementById("prev-btn");
+        const counterText = document.getElementById("question-counter");
+        const progressFill = document.getElementById("progress-fill");
+        const quizArea = document.getElementById("quiz-area");
+        const resultArea = document.getElementById("result-area");
+        const questionJumpInput = document.getElementById("question-jump-input");
+        const questionJumpBtn = document.getElementById("question-jump-btn");
+        
+        // --- EVENT LISTENERS ---
+        questionJumpBtn.addEventListener('click', jumpToQuestion);
+        questionJumpInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                jumpToQuestion();
+            }
+        });
+
+        // --- INITIALIZATION ---
+        function initQuiz(questions) {
+            currentQuestions = questions;
+            currentIndex = 0;
+            score = 0;
+            wrongAnswers = [];
+            userAnswers = new Array(questions.length).fill(null);
+            checkedAnswers = new Array(questions.length).fill(false);
+
+            quizArea.style.display = "block";
+            resultArea.style.display = "none";
+            
+            loadQuestion();
+        }
+
+        function jumpToQuestion() {
+            const num = parseInt(questionJumpInput.value, 10);
+            if (num && num >= 1 && num <= currentQuestions.length) {
+                currentIndex = num - 1;
+                loadQuestion();
+                questionJumpInput.value = ''; // Clear input
+            } else {
+                alert(`Lütfen 1 ile ${currentQuestions.length} arasında geçerli bir soru numarası girin.`);
+            }
+        }
+
+        function loadQuestion() {
+            // Butonları ve seçenekleri sıfırla
+            nextBtn.style.display = "none";
+            checkBtn.style.display = "none";
+            prevBtn.style.display = currentIndex > 0 ? "inline-block" : "none";
+            optionsList.innerHTML = "";
+            
+            const currentQ = currentQuestions[currentIndex];
+            
+            // Soru metnini ve ilerleme çubuğunu güncelle
+            questionText.textContent = `${currentIndex + 1}. ${currentQ.q}`;
+            counterText.textContent = `Soru ${currentIndex + 1} / ${currentQuestions.length}`;
+            const progressPct = ((currentIndex) / currentQuestions.length) * 100;
+            progressFill.style.width = `${progressPct}%`;
+
+            // Seçenekleri oluştur
+            currentQ.options.forEach((opt, index) => {
+                const li = document.createElement("li");
+                li.className = "option-item";
+                li.textContent = opt;
+                li.onclick = () => selectOption(index, li);
+                optionsList.appendChild(li);
+            });
+
+            const items = document.querySelectorAll(".option-item");
+
+            // Eğer bu soru daha önce cevaplandıysa, durumu yeniden yükle
+            if (checkedAnswers[currentIndex]) {
+                const userAnswer = userAnswers[currentIndex];
+                items[userAnswer.selected].classList.add(userAnswer.isCorrect ? "correct" : "wrong");
+                if (!userAnswer.isCorrect) {
+                    items[currentQ.correct].classList.add("correct");
+                }
+                items.forEach(item => item.style.pointerEvents = "none"); // Tekrar seçim yapmayı engelle
+                nextBtn.style.display = "inline-block";
+            } 
+            // Cevaplanmadıysa ama bir seçim yapılıp geri dönüldüyse
+            else if (userAnswers[currentIndex] !== null) {
+                const selectedIdx = userAnswers[currentIndex].selected;
+                items[selectedIdx].classList.add("selected");
+                checkBtn.style.display = "inline-block";
+            }
+        }
+
+        function selectOption(index, element) {
+            if (checkedAnswers[currentIndex]) return; // Cevap kontrol edildiyse seçim yapmayı engelle
+
+            const items = document.querySelectorAll(".option-item");
+            items.forEach(item => item.classList.remove("selected"));
+            element.classList.add("selected");
+            
+            userAnswers[currentIndex] = { selected: index };
+            checkBtn.style.display = "inline-block";
+        }
+
+        function checkAnswer() {
+            const userAnswer = userAnswers[currentIndex];
+            if (userAnswer === null) return;
+            
+            checkedAnswers[currentIndex] = true;
+            const currentQ = currentQuestions[currentIndex];
+            const isCorrect = userAnswer.selected === currentQ.correct;
+            userAnswer.isCorrect = isCorrect;
+
+            const items = document.querySelectorAll(".option-item");
+            items.forEach(item => item.style.pointerEvents = "none");
+            checkBtn.style.display = "none";
+            nextBtn.style.display = "inline-block";
+
+            if (isCorrect) {
+                items[userAnswer.selected].classList.add("correct");
+                items[userAnswer.selected].innerHTML += ` <span style="float:right;">✅</span>`;
+                score++;
+            } else {
+                items[userAnswer.selected].classList.add("wrong");
+                items[userAnswer.selected].innerHTML += ` <span style="float:right;">❌</span>`;
+                items[currentQ.correct].classList.add("correct");
+                items[currentQ.correct].innerHTML += ` <span style="float:right; font-size:0.9em;">(Doğru Cevap)</span>`;
+                
+                // Hatalı cevapları tekrar çözme modu için ekle
+                if (!wrongAnswers.some(q => q.q === currentQ.q)) {
+                    wrongAnswers.push(currentQ);
+                }
+            }
+        }
+
+        function previousQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                loadQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < currentQuestions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizArea.style.display = "none";
+            resultArea.style.display = "block";
+            
+            progressFill.style.width = "100%";
+            counterText.textContent = "Tamamlandı";
+
+            const finalScore = userAnswers.filter(a => a && a.isCorrect).length;
+            const totalAnswered = userAnswers.filter(a => a !== null).length;
+
+            const percentage = Math.round((finalScore / currentQuestions.length) * 100);
+            document.getElementById("final-score").textContent = `%${percentage}`;
+            document.getElementById("total-correct").textContent = finalScore;
+            document.getElementById("total-wrong").textContent = currentQuestions.length - finalScore;
+
+            const circle = document.getElementById("score-circle");
+            const color = percentage >= 50 ? "var(--success-color)" : "var(--error-color)";
+            circle.style.background = `conic-gradient(${color} ${percentage}%, var(--border-color) 0)`;
+
+            const fbText = document.getElementById("feedback-text");
+            if(percentage >= 90) fbText.textContent = "Mükemmel! Neredeyse hatasız. 🏆";
+            else if(percentage >= 70) fbText.textContent = "Gayet iyi gidiyorsun! 🚀";
+            else if(percentage >= 50) fbText.textContent = "Fena değil, biraz tekrarla süper olur. 📚";
+            else fbText.textContent = "Daha fazla çalışmalısın. Pes etmek yok! 💪";
+
+            const retryBtn = document.getElementById("retry-wrong-btn");
+            const finalWrongAnswers = currentQuestions.filter((q, i) => userAnswers[i] && !userAnswers[i].isCorrect);
+
+            if (finalWrongAnswers.length > 0) {
+                retryBtn.style.display = "inline-block";
+                retryBtn.textContent = `Hatalı ${finalWrongAnswers.length} Soruyu Çöz`;
+                // Global wrongAnswers listesini final sonuçla güncelle
+                wrongAnswers = finalWrongAnswers; 
+            } else {
+                retryBtn.style.display = "none";
+            }
+        }
+
+        function restartFullQuiz() {
+            isReviewMode = false;
+            initQuiz(fullQuestionPool);
+        }
+
+        function retryWrongAnswers() {
+            isReviewMode = true;
+            const questionsToRetry = [...wrongAnswers];
+            initQuiz(questionsToRetry);
+        }
+
+
+        function toggleDarkMode() {
+            document.body.classList.toggle("dark-mode");
+        }
+
+        // Uygulamayı başlat
+        initQuiz(fullQuestionPool);
+
+    </script>
+</body>
+</html>
